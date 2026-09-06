@@ -4,6 +4,7 @@ libwebserver_sources = [
     'dos.cpp',
     'memory.cpp',
     'webserver.cpp',
+    'frame.cpp',
 ]
 
 libwebserver = static_library(

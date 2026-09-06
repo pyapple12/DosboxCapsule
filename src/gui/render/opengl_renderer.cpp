@@ -5,6 +5,7 @@
 
 #if C_OPENGL
 
+#include "gui/capsule_frame.h"
 #include "gui/private/common.h"
 #include "private/auto_shader_switcher.h"
 #include "private/shader_manager.h"
@@ -417,6 +418,17 @@ void OpenGlRenderer::EndFrame()
 
 	last_framebuf       = curr_framebuf;
 	last_framebuf_dirty = true;
+
+	// Capsule 帧流：本帧内容已完整（curr -> last 拷贝完成），上报给 webserver；
+	// 帧缓冲尺寸与纹理不一致时（模式切换瞬间）跳过本帧
+	if (last_framebuf.size() ==
+	    static_cast<size_t>(input_texture.width) * input_texture.height) {
+		CapsuleFrame::Capture(
+		        reinterpret_cast<const uint8_t*>(last_framebuf.data()),
+		        input_texture.width * 4,
+		        input_texture.width,
+		        input_texture.height);
+	}
 }
 
 void OpenGlRenderer::PrepareFrame()

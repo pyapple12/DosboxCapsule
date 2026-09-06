@@ -3,6 +3,7 @@
 
 #include "sdl_renderer.h"
 
+#include "gui/capsule_frame.h"
 #include "gui/private/common.h"
 
 #include "capture/capture.h"
@@ -319,6 +320,13 @@ void SdlRenderer::EndFrame()
 	            (curr_framebuf.surface->h * curr_framebuf.surface->pitch));
 
 	last_framebuf_dirty = true;
+
+	// Capsule 帧流：本帧内容已完整（curr -> last 拷贝完成），上报给 webserver
+	CapsuleFrame::Capture(
+	        static_cast<const uint8_t*>(last_framebuf.surface->pixels),
+	        last_framebuf.surface->pitch,
+	        last_framebuf.surface->w,
+	        last_framebuf.surface->h);
 }
 
 void SdlRenderer::PrepareFrame()

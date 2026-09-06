@@ -5,7 +5,10 @@
 #include "bridge.h"
 #include "cpu.h"
 #include "dos.h"
+#include "frame.h"
 #include "memory.h"
+
+#include "gui/capsule_frame.h"
 
 #include <set>
 #include <string>
@@ -58,6 +61,8 @@ static void setup_api_handlers()
 	server.Get("/api/v1/cpu/state", CpuStateCommand::Get);
 
 	server.Get("/api/v1/dos/internals", DosInternalsCommand::Get);
+
+	server.Get("/api/v2/frame", GetFrame);
 
 	server.Post("/api/v1/memory/allocate", AllocMemoryCommand::Post);
 	server.Post("/api/v1/memory/free", FreeMemoryCommand::Post);
@@ -199,6 +204,9 @@ void WEBSERVER_Init()
 		const auto port = section->GetInt("webserver_port");
 		const auto resource_home = get_resource_path("webserver").string();
 
+		// Capsule 帧流随 webserver 启停：启用后渲染路径开始捕获最新帧
+		CapsuleFrame::SetEnabled(true);
+
 		std::thread thread(Webserver::run, addr, port, resource_home);
 
 		thread.detach();
@@ -207,6 +215,7 @@ void WEBSERVER_Init()
 
 void WEBSERVER_Destroy()
 {
+	CapsuleFrame::SetEnabled(false);
 	Webserver::server.stop();
 }
 

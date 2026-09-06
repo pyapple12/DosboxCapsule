@@ -1,4 +1,5 @@
 target_sources(libdosboxcommon PRIVATE
+  capsule_frame.cpp
   clipboard.cpp
   mapper.cpp
   sdl_gui.cpp

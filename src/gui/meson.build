@@ -1,4 +1,5 @@
 libgui_sources = files(
+    'capsule_frame.cpp',
     'clipboard.cpp',
     'mapper.cpp',
     'mapper.cpp',
