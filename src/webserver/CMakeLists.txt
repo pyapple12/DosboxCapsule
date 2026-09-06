@@ -4,6 +4,7 @@ target_sources(libdosboxcommon PRIVATE
   cpu.cpp
   memory.cpp
   dos.cpp
-  frame.cpp)
+  frame.cpp
+  input.cpp)
 
 target_link_libraries(libdosboxcommon PRIVATE simde)

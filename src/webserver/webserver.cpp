@@ -6,11 +6,13 @@
 #include "cpu.h"
 #include "dos.h"
 #include "frame.h"
+#include "input.h"
 #include "memory.h"
 
 #include "gui/capsule_frame.h"
 
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -63,6 +65,8 @@ static void setup_api_handlers()
 	server.Get("/api/v1/dos/internals", DosInternalsCommand::Get);
 
 	server.Get("/api/v2/frame", GetFrame);
+
+	server.Post("/api/v2/input/event", PostInputEvent);
 
 	server.Post("/api/v1/memory/allocate", AllocMemoryCommand::Post);
 	server.Post("/api/v1/memory/free", FreeMemoryCommand::Post);
