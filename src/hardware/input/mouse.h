@@ -89,6 +89,13 @@ void MOUSE_EventButton(const MouseButtonId button_id, const bool pressed);
 void MOUSE_EventButton(const MouseButtonId button_id, const bool pressed,
                        const MouseInterfaceId device_id);
 
+// Capsule 注入原语（PL002.25）：统一窗口形态下游戏窗口离屏托管，宿主光标
+// 永远不在窗口内，常规宿主事件会被 cursor_is_outside 判定丢弃——注入端点
+// （webserver /api/v2/input/event）改用这两个直通函数，跳过宿主光标判定，
+// 仅通知使用宿主指针的模拟接口（INT 33h 等），语义与真实事件一致。
+void MOUSE_InjectMoved(const float x_rel, const float y_rel);
+void MOUSE_InjectButton(const MouseButtonId button_id, const bool pressed);
+
 void MOUSE_EventWheel(const float w_rel);
 void MOUSE_EventWheel(const int16_t w_rel, const MouseInterfaceId device_id);
 

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "gui/mapper.h"
+#include "hardware/input/mouse.h"
 #include "libs/json/json.h"
 #include "webserver/bridge.h"
 #include "webserver/webserver.h"
@@ -117,40 +118,61 @@ bool inject_key(const json& body)
 	return true;
 }
 
-// 鼠标经 SDL_PushEvent 由主事件泵消费（SDL 队列线程安全）；暂停态注入
-// 会被清空属预期（暂停时无需注入）
+// 鼠标注入走 Bridge 直调 MOUSE_InjectMoved/InjectButton（注入原语绕过宿主
+// 光标判定——离屏窗口下 cursor_is_outside 恒真，SDL_PushEvent 路径会被丢弃）；
+// 与键盘一致在模拟线程执行
+struct MouseInjectCommand : public Command {
+	bool is_button = false;
+	float dx       = 0.0f;
+	float dy       = 0.0f;
+	MouseButtonId button_id = MouseButtonId::Left;
+	bool pressed   = false;
+
+	void Execute() override
+	{
+		if (is_button) {
+			MOUSE_InjectButton(button_id, pressed);
+		} else {
+			MOUSE_InjectMoved(dx, dy);
+		}
+	}
+};
+
 bool inject_mouse_rel(const json& body)
 {
-	SDL_Event ev{};
-	ev.type              = SDL_MOUSEMOTION;
-	ev.motion.type       = SDL_MOUSEMOTION;
-	ev.motion.xrel       = body.at("dx").get<int32_t>();
-	ev.motion.yrel       = body.at("dy").get<int32_t>();
-	return SDL_PushEvent(&ev) == 1;
+	MouseInjectCommand cmd;
+	cmd.dx = static_cast<float>(body.at("dx").get<int32_t>());
+	cmd.dy = static_cast<float>(body.at("dy").get<int32_t>());
+	cmd.WaitForCompletion();
+	if (!cmd.error.empty()) {
+		throw std::runtime_error(cmd.error);
+	}
+	return true;
 }
 
 bool inject_mouse_button(const json& body)
 {
 	const auto button_name = body.at("button").get<std::string>();
-	uint8_t button         = SDL_BUTTON_LEFT;
+	MouseButtonId cmd_button_id = MouseButtonId::Left;
 	if (button_name == "left") {
-		button = SDL_BUTTON_LEFT;
+		cmd_button_id = MouseButtonId::Left;
 	} else if (button_name == "right") {
-		button = SDL_BUTTON_RIGHT;
+		cmd_button_id = MouseButtonId::Right;
 	} else if (button_name == "middle") {
-		button = SDL_BUTTON_MIDDLE;
+		cmd_button_id = MouseButtonId::Middle;
 	} else {
 		throw std::invalid_argument("Unknown button '" + button_name + "'");
 	}
 
-	SDL_Event ev{};
-	ev.type             = body.at("down").get<bool>() ? SDL_MOUSEBUTTONDOWN
-	                                              : SDL_MOUSEBUTTONUP;
-	ev.button.type      = ev.type;
-	ev.button.button    = button;
-	ev.button.state     = body.at("down").get<bool>() ? SDL_PRESSED
-	                                                  : SDL_RELEASED;
-	return SDL_PushEvent(&ev) == 1;
+	MouseInjectCommand cmd;
+	cmd.is_button = true;
+	cmd.button_id = cmd_button_id;
+	cmd.pressed   = body.at("down").get<bool>();
+	cmd.WaitForCompletion();
+	if (!cmd.error.empty()) {
+		throw std::runtime_error(cmd.error);
+	}
+	return true;
 }
 
 } // namespace

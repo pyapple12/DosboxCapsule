@@ -692,6 +692,55 @@ void MOUSE_EventWheel(const float w_rel)
 	}
 }
 
+void MOUSE_InjectMoved(const float x_rel, const float y_rel)
+{
+	// Capsule 注入原语：不做宿主光标判定（离屏窗口下 cursor_is_outside
+	// 恒为真），直接通知使用宿主指针的接口
+	if (!mouse_shared.started) {
+		return;
+	}
+
+	// 绝对坐标随注入位移累进（clamp 在绘制区内）：nomouse/未捕获态下
+	// 驱动自动切换到 seamless 绝对路径，没有这一步光标会钉死在原点
+	const auto x1 = iroundf(state.draw_rect.x1());
+	const auto y1 = iroundf(state.draw_rect.y1());
+	const auto x2 = x1 + check_cast<int>(mouse_shared.resolution_x);
+	const auto y2 = y1 + check_cast<int>(mouse_shared.resolution_y);
+	state.cursor_x_abs = std::clamp(state.cursor_x_abs + x_rel,
+	                                static_cast<float>(x1),
+	                                static_cast<float>(x2 - 1));
+	state.cursor_y_abs = std::clamp(state.cursor_y_abs + y_rel,
+	                                static_cast<float>(y1),
+	                                static_cast<float>(y2 - 1));
+
+	const float x_scaled = x_rel * mouse_config.sensitivity_coeff_x;
+	const float y_scaled = y_rel * mouse_config.sensitivity_coeff_y;
+	for (const auto interface_id : AllMouseInterfaceIds) {
+		auto& interface = MouseInterface::GetInstance(interface_id);
+		if (interface.IsUsingHostPointer()) {
+			interface.NotifyMoved(x_scaled,
+			                      y_scaled,
+			                      state.cursor_x_abs,
+			                      state.cursor_y_abs);
+		}
+	}
+}
+
+void MOUSE_InjectButton(const MouseButtonId button_id, const bool pressed)
+{
+	// Capsule 注入原语：同上，按钮直通；从不丢弃释放事件
+	if (!mouse_shared.started) {
+		return;
+	}
+
+	for (const auto interface_id : AllMouseInterfaceIds) {
+		auto& interface = MouseInterface::GetInstance(interface_id);
+		if (interface.IsUsingHostPointer()) {
+			interface.NotifyButton(button_id, pressed);
+		}
+	}
+}
+
 void MOUSE_EventWheel(const int16_t w_rel, const MouseInterfaceId interface_id)
 {
 	// Event from ManyMouse
