@@ -39,11 +39,21 @@ static void error_handler(const httplib::Request&, httplib::Response& res,
 {
 	json j;
 	std::string msg;
+	auto status = httplib::StatusCode::InternalServerError_500;
 
 	try {
 		if (ep) {
 			std::rethrow_exception(ep);
 		}
+	} catch (const std::invalid_argument& e) {
+		// Capsule：客户端参数错误按 400 报告（非法键名/按钮名等），
+		// 与服务端故障的 500 区分，轮询方据此决定是否重试
+		msg    = e.what();
+		status = httplib::StatusCode::BadRequest_400;
+	} catch (const std::out_of_range& e) {
+		// Capsule：非法地址/越界请求同理映射 400，不崩溃
+		msg    = e.what();
+		status = httplib::StatusCode::BadRequest_400;
 	} catch (const std::exception& e) {
 		msg = e.what();
 	} catch (...) {
@@ -51,7 +61,7 @@ static void error_handler(const httplib::Request&, httplib::Response& res,
 	}
 
 	j["error"] = msg;
-	res.status = httplib::StatusCode::InternalServerError_500;
+	res.status = status;
 
 	send_json(res, j);
 }
