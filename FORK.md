@@ -1,11 +1,13 @@
 # DosboxCapsule
 
-This is a fork of [dosbox-staging](https://github.com/dosbox-staging/dosbox-staging),
-maintained as the emulator component of
+DosboxCapsule is a standalone repository carrying the
+[dosbox-staging](https://github.com/dosbox-staging/dosbox-staging) codebase
+(baseline: **v0.83.0**), maintained as the emulator component of
 [CapsuleRetro](https://github.com/pyapple12/CapsuleRetro) — a packaging system that
 presents classic DOS games as modern-style releases.
 
-- Patches live on the `capsule` branch (baseline: v0.83.0)
+- `main` branch = v0.83.0 baseline + CapsuleRetro patches (upgrade via rebase onto
+  upstream release tags)
 - Patch inventory and upgrade recipe are maintained in the
   [CapsuleRetro repository](https://github.com/pyapple12/CapsuleRetro),
   under `tools/dosbox-fork/`
