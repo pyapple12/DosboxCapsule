@@ -1585,6 +1585,13 @@ static int get_sdl_window_flags()
 {
 	auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 
+	// Capsule：帧流模式下窗口创建即隐藏——launcher 画布消费 pre-shader 帧
+	// 成像，原生窗口无需可见（静默启动，dosbox 零痕迹）；设置环境变量
+	// CAPSULERETRO_SHOW_DOSBOX=1 时保持可见（排障开关）
+	if (std::getenv("CAPSULERETRO_SHOW_DOSBOX") == nullptr) {
+		flags |= SDL_WINDOW_HIDDEN;
+	}
+
 	if (!get_sdl_section()->GetBool("window_decorations")) {
 		flags |= SDL_WINDOW_BORDERLESS;
 	}
