@@ -74,7 +74,7 @@ static void setup_api_handlers()
 
 	server.Get("/api/v1/dos/internals", DosInternalsCommand::Get);
 
-	server.Get("/api/v2/frame", GetFrame);
+	server.Get("/api/v2/frame/stream", GetFrameStream);
 
 	server.Post("/api/v2/input/event", PostInputEvent);
 

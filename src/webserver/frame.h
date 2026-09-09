@@ -8,10 +8,11 @@
 
 namespace Webserver {
 
-// GET /api/v2/frame：返回最新完成的 DOS 帧。
-// 响应头携带元数据（帧号/宽/高/行距），body 为紧凑 32bit BGRX 像素；
-// 尚无帧可用时返回 503。
-void GetFrame(const httplib::Request& req, httplib::Response& res);
+// GET /api/v2/frame/stream：流式直推（HTTP chunked 长连接）。连接建立后每
+// 捕获一帧即推送一个数据块：28 字节帧内头（帧号 u64 + 宽/高/行距 u32×3 +
+// 捕获时刻 u64，全部 LE）+ 紧凑 BGRX 像素，客户端按头计算帧长切分流。
+//（PL005：轮询版 GET /api/v2/frame 已随流式端点落地退役。）
+void GetFrameStream(const httplib::Request& req, httplib::Response& res);
 
 } // namespace Webserver
 

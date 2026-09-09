@@ -24,6 +24,7 @@ struct FrameMeta {
 	uint32_t width       = 0; // 帧宽（像素）
 	uint32_t height      = 0; // 帧高（像素）
 	uint32_t pitch_bytes = 0; // 快照每行字节数（紧凑 = width * 4）
+	uint64_t capture_ms  = 0; // 帧捕获时刻（UNIX epoch 毫秒，供端到端帧龄测量）
 };
 
 // webserver 启停时调用。未启用时 Capture() 为空操作。
@@ -36,6 +37,12 @@ void Capture(const uint8_t* pixels, int pitch_bytes, int width, int height);
 // webserver 线程调用：取当前帧快照写入 out_pixels（紧凑 BGRX）。
 // 尚无帧可用时返回 false。
 bool Snapshot(std::vector<uint8_t>& out_pixels, FrameMeta& out_meta);
+
+// webserver 线程调用：阻塞等待帧号大于 after_number 的新帧（最多 timeout_ms
+// 毫秒，条件变量由 Capture 唤醒），命中时写入快照并返回 true；超时返回 false
+//（流式推送借此实现"每帧即推"，超时醒来供调用方例行检查客户端断开）。
+bool WaitSnapshot(uint64_t after_number, std::vector<uint8_t>& out_pixels,
+                  FrameMeta& out_meta, int timeout_ms);
 
 } // namespace CapsuleFrame
 
